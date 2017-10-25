@@ -1,0 +1,34 @@
+#!/bin/bash
+
+clear
+
+echo ----------------TEST TD 1 : Entrées-Sorties----------------
+
+echo
+
+./userprog/nachos -x ./test/testChar
+
+clear
+
+echo
+
+./userprog/nachos -x ./test/testString
+
+clear
+
+
+echo
+
+./userprog/nachos -x ./test/testInt
+
+clear
+
+echo
+
+./userprog/nachos -x ./test/testPrintf
+
+clear
+
+echo ------------------------FIN TEST---------------------------
+
+echo
