@@ -17,6 +17,8 @@
 
 #define USER_START_ADDRESS 0x80
 
+
+
 /* system call codes -- used by the stubs to tell the kernel which system call
  * is being asked for
  */
@@ -39,6 +41,12 @@
 #define SC_GetString 14
 #define SC_PutInt 15
 #define SC_GetInt 16
+#define SC_ThreadCreate 17
+#define SC_ThreadExit 18
+#define SC_SemaphoreCreate 19
+#define SC_SemaphoreDelete 20
+#define SC_SemaphoreP 21
+#define SC_SemaphoreV 22
 #endif
 
 
@@ -70,6 +78,9 @@ void Exit (int status) __attribute__ ((__noreturn__));
 /* A unique identifier for an executing user program (address space) */
 typedef int SpaceId;
 
+#ifdef CHANGED
+typedef int sem_t;
+#endif
 /* Run the executable, stored in the Nachos file "name", and return the
  * address space identifier
  */
@@ -147,6 +158,12 @@ char GetChar();
 void GetString(char *s, int n);
 void PutInt(int n);
 void GetInt(int *n);
+int ThreadCreate(void f(void *arg), void *arg);
+void TreadExit(void);
+sem_t SemaphoreCreate(int nb);
+void SemaphoreDelete(sem_t s);
+void P(sem_t s);
+void V(sem_t s);
 #endif
 
 #endif // IN_USER_MODE

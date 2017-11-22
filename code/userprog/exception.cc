@@ -28,6 +28,7 @@
 #ifdef CHANGED
 #include "synch.h"      // in order to use a Semaphore
 #include "synchconsole.h"     // in order to use SynchConsole
+#include "userthread.h"
 #endif
 
 //----------------------------------------------------------------------
@@ -90,70 +91,121 @@ ExceptionHandler (ExceptionType which)
     case SC_PutChar:
       {
         DEBUG ('s', "PutChar\n ");
+        mutexWrite->P ();
         synchconsole->SynchPutChar(machine->ReadRegister (4));
+        mutexWrite->V ();
         break;
       }
     case SC_PutString:
       {
         DEBUG ('s', "PutString\n ");
-        mutex->P ();
+        mutexWrite->P ();
         char buffer[MAX_STRING_SIZE];
         int adr = machine->ReadRegister (4);
         while (synchconsole->copyStringFromMachine (adr, buffer, MAX_STRING_SIZE)){
           synchconsole->SynchPutString (buffer);
           adr = adr + strlen (buffer);
         }
-        mutex->V ();
+        mutexWrite->V ();
         break;
       }
     case SC_GetChar:
       {
         DEBUG ('s', "GetChar\n ");
-        mutex->P ();
+        mutexRead->P ();
         char c = synchconsole->SynchGetChar ();
         machine->WriteRegister (2, (int)c);
-        mutex->V ();
+        mutexRead->V ();
         break;
       }
     case SC_GetString:
       {
         DEBUG ('s', "GetString\n ");
-        mutex->P ();
+        mutexRead->P ();
         int adr = machine->ReadRegister (4);
         int n = machine->ReadRegister (5);
         char buffer[n+1];
         synchconsole->SynchGetString (buffer, n+1);
         synchconsole->copyStringToMachine (adr, buffer, n+1);
-        mutex->V ();
+        mutexRead->V ();
         break;
       }
     case SC_PutInt:
       {
         DEBUG ('s', "PutInt\n ");
-        mutex->P ();
+        mutexWrite->P ();
         int n = machine->ReadRegister (4);
         synchconsole->SynchPutInt (n);
-        mutex->V ();
+        mutexWrite->V ();
         break;
       }
     case SC_GetInt:
       {
         DEBUG ('s', "GetInt\n ");
-        mutex->P ();
+        mutexRead->P ();
         int addr = machine->ReadRegister (4);
         int n;
         synchconsole->SynchGetInt (&n);
         machine->WriteMem(addr, sizeof(int), n);
-        mutex->V ();
+        mutexRead->V ();
         break;
       }
     case SC_Exit:
       {
         DEBUG ('s', "Exit\n ");
         //int addr = machine->ReadRegister (4);     this int is the return value
-        delete mutex;
-        mutex = NULL;
+        delete mutexWrite;
+        mutexWrite = NULL;
+        delete mutexRead;
+        mutexRead = NULL;
         interrupt->Halt ();
+        break;
+      }
+    case SC_ThreadCreate:
+      {
+        DEBUG ('s', "ThreadCreate\n ");
+        mutexRead->P ();
+        int f = machine->ReadRegister(4);
+        int arg = machine->ReadRegister(5);
+        int ret = machine->ReadRegister(6);
+        int returnValue = do_ThreadCreate(f, arg, ret);
+        machine->WriteRegister(2, returnValue);
+        mutexRead->V ();
+        break;
+      }
+    case SC_ThreadExit:
+      {
+        DEBUG ('s', "ThreadExit\n ");
+        do_ThreadExit();
+        break;
+      }
+    case SC_SemaphoreCreate:
+      {
+        DEBUG ('s', "SemaphoreCreate\n ");
+        int nbCredit = machine->ReadRegister(4);
+        int semUser = do_SemaphoreCreate(nbCredit);
+        machine->WriteRegister(2, semUser);
+        break;
+      }
+    case SC_SemaphoreDelete:
+      {
+        DEBUG ('s', "SemaphoreDelete\n ");
+        int id = machine->ReadRegister(4);
+        do_SemaphoreDelete(id);
+        break;
+      }
+    case SC_SemaphoreP:
+      {
+        DEBUG ('s', "SemaphoreP\n ");
+        int id = machine->ReadRegister(4);
+        do_SemaphoreP(id);
+        break;
+      }
+      case SC_SemaphoreV:
+      {
+        DEBUG ('s', "SemaphoreV\n ");
+        int id = machine->ReadRegister(4);
+        do_SemaphoreV(id);
         break;
       }
     #endif

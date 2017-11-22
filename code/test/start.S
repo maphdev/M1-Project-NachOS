@@ -34,7 +34,7 @@
 __start:
 	jal	main
 	move	$4,$2
-	jal	Exit	 /* if we return from main, exit(0) */
+	jal	ThreadExit	 /* if we return from main, exit(0) */
 	.end __start
 
 /* -------------------------------------------------------------
@@ -195,6 +195,56 @@ addiu $2,$0,SC_GetInt
 syscall
 j	$31
 .end GetInt
+
+.globl ThreadCreate
+.ent	ThreadCreate
+ThreadCreate:
+addiu $6,$0,ThreadExit
+addiu $2,$0,SC_ThreadCreate
+syscall
+j	$31
+.end ThreadCreate
+
+.globl ThreadExit
+.ent	ThreadExit
+ThreadExit:
+addiu $2,$0,SC_ThreadExit
+syscall
+j	$31
+.end ThreadExit
+
+.globl SemaphoreCreate
+.ent	SemaphoreCreate
+SemaphoreCreate:
+addiu $2,$0,SC_SemaphoreCreate
+syscall
+j	$31
+.end SemaphoreCreate
+
+.globl SemaphoreDelete
+.ent	SemaphoreDelete
+SemaphoreDelete:
+addiu $2,$0,SC_SemaphoreDelete
+syscall
+j	$31
+.end SemaphoreDelete
+
+.globl P
+.ent	P
+P:
+addiu $2,$0,SC_SemaphoreP
+syscall
+j	$31
+.end P
+
+.globl V
+.ent	V
+V:
+addiu $2,$0,SC_SemaphoreV
+syscall
+j	$31
+.end V
+
 
 #endif
 

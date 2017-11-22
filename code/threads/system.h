@@ -41,7 +41,8 @@ extern Machine *machine;	// user program memory and registers
 #include "synchconsole.h"
 extern SynchConsole *synchconsole;
 #include "synch.h"
-extern Semaphore *mutex;
+extern Semaphore *mutexRead;
+extern Semaphore *mutexWrite;
 #endif
 #endif
 

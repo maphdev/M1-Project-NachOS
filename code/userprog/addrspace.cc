@@ -1,9 +1,9 @@
-// addrspace.cc 
+// addrspace.cc
 //      Routines to manage address spaces (executing user programs).
 //
 //      In order to run a user program, you must:
 //
-//      1. link with the -N -T 0 option 
+//      1. link with the -N -T 0 option
 //      2. run coff2noff to convert the object file to Nachos format
 //              (Nachos object code format is essentially just a simpler
 //              version of the UNIX executable object code format)
@@ -12,7 +12,7 @@
 //              don't need to do this last step)
 //
 // Copyright (c) 1992-1993 The Regents of the University of California.
-// All rights reserved.  See copyright.h for copyright notice and limitation 
+// All rights reserved.  See copyright.h for copyright notice and limitation
 // of liability and disclaimer of warranty provisions.
 
 #include "copyright.h"
@@ -22,9 +22,14 @@
 #include "syscall.h"
 #include "new"
 
+#ifdef CHANGED
+#include "bitmap.h"
+#include "synch.h"
+#endif
+
 //----------------------------------------------------------------------
 // SwapHeader
-//      Do little endian to big endian conversion on the bytes in the 
+//      Do little endian to big endian conversion on the bytes in the
 //      object file header, in case the file was generated on a little
 //      endian machine, and we're now running on a big endian machine.
 //----------------------------------------------------------------------
@@ -53,7 +58,7 @@ SwapHeader (NoffHeader * noffH)
 //
 //      Assumes that the object code file is in NOFF format.
 //
-//      First, set up the translation from program memory to physical 
+//      First, set up the translation from program memory to physical
 //      memory.  For now, this is really simple (1:1), since we are
 //      only uniprogramming, and we have a single unsegmented page table
 //
@@ -87,7 +92,7 @@ AddrSpace::AddrSpace (OpenFile * executable)
 
     DEBUG ('a', "Initializing address space, num pages %d, total size 0x%x\n",
 	   numPages, size);
-// first, set up the translation 
+// first, set up the translation
     pageTable = new TranslationEntry[numPages];
     for (i = 0; i < numPages; i++)
       {
@@ -95,8 +100,8 @@ AddrSpace::AddrSpace (OpenFile * executable)
 	  pageTable[i].valid = TRUE;
 	  pageTable[i].use = FALSE;
 	  pageTable[i].dirty = FALSE;
-	  pageTable[i].readOnly = FALSE;	// if the code segment was entirely on 
-	  // a separate page, we could set its 
+	  pageTable[i].readOnly = FALSE;	// if the code segment was entirely on
+	  // a separate page, we could set its
 	  // pages to be read-only
       }
 
@@ -122,6 +127,14 @@ AddrSpace::AddrSpace (OpenFile * executable)
 	   size - UserStacksAreaSize, UserStacksAreaSize);
 
     pageTable[0].valid = FALSE;			// Catch NULL dereference
+
+    #ifdef CHANGED
+    int nb_slots = UserStacksAreaSize / (256 + 16);
+    bitmap = new BitMap(nb_slots);
+    bitmap->Mark(0);
+    DEBUG ('a', "Number of slots for user threads %d\n", nb_slots);
+    mutex = new Semaphore("mutex bitmap", 1);
+    #endif
 }
 
 //----------------------------------------------------------------------
@@ -134,6 +147,7 @@ AddrSpace::~AddrSpace ()
   // LB: Missing [] for delete
   // delete pageTable;
   delete [] pageTable;
+  delete bitmap;
   // End of modification
 }
 
@@ -197,3 +211,28 @@ AddrSpace::RestoreState ()
     machine->pageTable = pageTable;
     machine->pageTableSize = numPages;
 }
+
+#ifdef CHANGED
+
+int
+AddrSpace::AllocateUserStack ()
+{
+  mutex->P ();
+  int idFound = bitmap->Find();
+  mutex->V ();
+  ASSERT(idFound != -1);
+  int addrFound = numPages * PageSize - (256+16) * idFound -16;
+  return addrFound;
+  //return numPages * PageSize - 256 * nbThreads - 16;
+}
+
+void
+AddrSpace::DeAllocateUserStack (int addrUserStack)
+{
+  int idRec = (numPages * PageSize - addrUserStack) / (256 + 16);
+  mutex->P ();
+  bitmap->Clear(idRec);
+  mutex->V ();
+}
+
+#endif

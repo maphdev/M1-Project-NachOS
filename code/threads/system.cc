@@ -35,7 +35,8 @@ SynchDisk *synchDisk;
 Machine *machine;		// user program memory and registers
 #ifdef CHANGED
 SynchConsole * synchconsole;
-Semaphore *mutex;
+Semaphore *mutexRead;
+Semaphore *mutexWrite;
 #endif
 #endif
 
@@ -183,7 +184,8 @@ Initialize (int argc, char **argv)
 #ifdef USER_PROGRAM
     machine = new Machine (debugUserProg);	// this must come first
     #ifdef CHANGED
-    mutex = new Semaphore("mutex", 1);
+    mutexRead = new Semaphore("mutexRead", 1);
+    mutexWrite = new Semaphore("mutexWrite", 1);
     #endif
 
 #endif
@@ -225,8 +227,10 @@ Cleanup ()
     synchconsole = NULL;
     int ret = machine->ReadRegister (4);        //return value is collected
     delete(currentThread->space);
-    delete mutex;
-    mutex = NULL;
+    delete mutexRead;
+    delete mutexWrite;
+    mutexRead = NULL;
+    mutexWrite = NULL;
     #endif
     delete machine;
     machine = NULL;
