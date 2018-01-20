@@ -21,7 +21,6 @@ struct Package {
 static int nbThreads = 1;
 static Semaphore *mutexNbThreads = new Semaphore("mutex nb threads", 1);
 
-
 //----------------------------------------------------------------------
 // StartUserThread
 //
@@ -158,49 +157,4 @@ void do_SemaphoreV(int id){
   semTab[id]->V ();
 }
 
-//----------------------------------------------------------------------
-//
-// Fork pour l'utilisateur
-//
-//----------------------------------------------------------------------
-
-static void StartUserProcess(void *i) {
-  currentThread->space->InitRegisters(); // set the initial register values
-  machine->Run();
-}
-
-int do_ForkExec(char *filename) {
-
-  // Récupération de l'exécutable
-  OpenFile *executable = fileSystem->Open(filename);
-  if (executable == NULL) {
-    printf ("Unable to open file %s\n", filename);
-    return -1;
-  }
-
-  // Création de l'espace d'adressage à partir de l'exécutable
-  AddrSpace *space = new AddrSpace(executable);
-
-  // Nouveau thread
-  Thread *forkThread = new Thread("process_fork");
-  if (forkThread == NULL) {
-    printf("Unable to create Thread\n");
-    return -1;
-  }
-
-  // Association de l'espace d'adressage au threadToBeDestroyed
-  forkThread->space = space;
-
-  delete executable;
-
-  mutexNbThreads->P ();
-  nbThreads++;
-  mutexNbThreads->V ();
-
-  forkThread->Start(StartUserProcess, NULL);
-
-  // démarrer le processus créé
-
-  return nbThreads;
-}
 #endif

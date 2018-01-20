@@ -29,10 +29,6 @@
 #include "synch.h"      // in order to use a Semaphore
 #include "synchconsole.h"     // in order to use SynchConsole
 #include "userthread.h"
-#include "shellfunc.h"
-#define _POSIX_SOURCE
-#include <unistd.h>   //chdir
-#undef _POSIX_SOURCE
 #endif
 
 //----------------------------------------------------------------------
@@ -162,7 +158,6 @@ ExceptionHandler (ExceptionType which)
         mutexWrite = NULL;
         delete mutexRead;
         mutexRead = NULL;
-        //currentThread->Finish();
         interrupt->Halt ();
         break;
       }
@@ -211,126 +206,6 @@ ExceptionHandler (ExceptionType which)
         DEBUG ('s', "SemaphoreV\n ");
         int id = machine->ReadRegister(4);
         do_SemaphoreV(id);
-        break;
-      }
-      case SC_ForkExec:
-      {
-        DEBUG ('s', "ForkExec\n ");
-
-        // récupère la chaîne de caractère passée en paramètre
-        int arg = machine->ReadRegister(4);
-        int nbCharMax = 256;
-        char *filename = (char *) malloc (sizeof (*filename) * nbCharMax);
-        synchconsole->copyStringFromMachine(arg, filename, nbCharMax);
-
-        int ret = do_ForkExec (filename);
-        machine->WriteRegister(2, ret);
-
-        delete filename;
-        break;
-      }
-      case SC_Touch:
-      {
-        DEBUG ('s', "Touch\n ");
-
-        int arg = machine->ReadRegister(4);
-        char buffer[MAX_STRING_SIZE];
-
-        synchconsole->copyStringFromMachine (arg, buffer, MAX_STRING_SIZE);
-
-        int ret = fileSystem->Create(buffer, 0);
-
-        machine->WriteRegister(2, ret);
-
-        break;
-      }
-      case SC_Rm:
-      {
-        DEBUG ('s', "Rm\n ");
-
-        int arg = machine->ReadRegister(4);
-        char buffer[MAX_STRING_SIZE];
-
-        synchconsole->copyStringFromMachine (arg, buffer, MAX_STRING_SIZE);
-
-        int ret = fileSystem->Remove(buffer);
-        if (ret == 0)
-          printf("No such file in directory.\n");
-
-        machine->WriteRegister(2, ret);
-
-        break;
-      }
-      case SC_Cd:
-      {
-        DEBUG ('s', "Cd\n ");
-
-        int arg = machine->ReadRegister(4);
-        char buffer[MAX_STRING_SIZE];
-
-        synchconsole->copyStringFromMachine (arg, buffer, MAX_STRING_SIZE);
-
-        int ret = do_Cd(buffer);
-        if (ret != 0)
-          printf("No such path.\n");
-
-        machine->WriteRegister(2, ret);
-
-        break;
-      }
-      case SC_Mkdir:
-      {
-        DEBUG ('s', "Mkdir\n ");
-
-        int arg = machine->ReadRegister(4);
-        char buffer[MAX_STRING_SIZE];
-
-        synchconsole->copyStringFromMachine (arg, buffer, MAX_STRING_SIZE);
-
-        int ret = do_Mkdir(buffer);
-
-        machine->WriteRegister(2, ret);
-
-        break;
-      }
-      case SC_Rmdir:
-      {
-        DEBUG ('s', "Rmdir\n ");
-
-        int arg = machine->ReadRegister(4);
-        char buffer[MAX_STRING_SIZE];
-
-        synchconsole->copyStringFromMachine (arg, buffer, MAX_STRING_SIZE);
-
-        int ret = do_Rmdir(buffer);
-        if (ret != 0)
-          printf("No such directory.\n");
-
-        machine->WriteRegister(2, ret);
-
-        break;
-      }
-      case SC_PrintCurrentDir:
-      {
-        DEBUG ('s', "PrintCurrentDir\n ");
-
-        int arg = machine->ReadRegister(4);
-        char buffer[MAX_STRING_SIZE];
-
-        synchconsole->copyStringFromMachine (arg, buffer, MAX_STRING_SIZE);
-
-        int ret = do_GetCurrentDir(buffer);
-
-        machine->WriteRegister(2, ret);
-
-        break;
-      }
-      case SC_Ls:
-      {
-        DEBUG ('s', "Ls\n ");
-
-        system("ls");
-
         break;
       }
     #endif

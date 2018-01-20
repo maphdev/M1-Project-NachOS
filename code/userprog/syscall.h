@@ -35,31 +35,18 @@
 #define SC_Yield	10
 
 #ifdef CHANGED
-
 #define SC_PutChar 11
 #define SC_PutString 12
 #define SC_GetChar 13
 #define SC_GetString 14
 #define SC_PutInt 15
 #define SC_GetInt 16
-
 #define SC_ThreadCreate 17
 #define SC_ThreadExit 18
-
 #define SC_SemaphoreCreate 19
 #define SC_SemaphoreDelete 20
 #define SC_SemaphoreP 21
 #define SC_SemaphoreV 22
-
-#define SC_ForkExec 23
-
-#define SC_Touch 24
-#define SC_Rm 25
-#define SC_Cd 26
-#define SC_Mkdir 27
-#define SC_Rmdir 28
-#define SC_PrintCurrentDir 29
-#define SC_Ls 30
 #endif
 
 
@@ -165,32 +152,18 @@ void Fork (void (*func) ());
 void Yield ();
 
 #ifdef CHANGED
-
 void PutChar(char c);
 void PutString(char *s);
 char GetChar();
 void GetString(char *s, int n);
 void PutInt(int n);
 void GetInt(int *n);
-
 int ThreadCreate(void f(void *arg), void *arg);
 void TreadExit(void);
-
 sem_t SemaphoreCreate(int nb);
 void SemaphoreDelete(sem_t s);
 void P(sem_t s);
 void V(sem_t s);
-
-int ForkExec(const char *s);
-
-//little shell
-int Touch(char *filename);
-int Rm(char *filename);
-int Cd(char *dirname);
-int Mkdir(char *dirname);
-int Rmdir(char *dirname);
-void PrintCurrentDir();
-void Ls();
 #endif
 
 #endif // IN_USER_MODE

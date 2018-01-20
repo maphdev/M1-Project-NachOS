@@ -245,69 +245,6 @@ syscall
 j	$31
 .end V
 
-.globl ForkExec
-.ent	ForkExec
-ForkExec:
-addiu $2,$0,SC_ForkExec
-syscall
-j	$31
-.end ForkExec
-
-.globl Touch
-.ent	Touch
-Touch:
-addiu $2,$0,SC_Touch
-syscall
-j	$31
-.end Touch
-
-.globl Rm
-.ent	Rm
-Rm:
-addiu $2,$0,SC_Rm
-syscall
-j	$31
-.end Rm
-
-.globl Cd
-.ent	Cd
-Cd:
-addiu $2,$0,SC_Cd
-syscall
-j	$31
-.end Cd
-
-.globl Mkdir
-.ent	Mkdir
-Mkdir:
-addiu $2,$0,SC_Mkdir
-syscall
-j	$31
-.end Mkdir
-
-.globl Rmdir
-.ent	Rmdir
-Rmdir:
-addiu $2,$0,SC_Rmdir
-syscall
-j	$31
-.end Rmdir
-
-.globl PrintCurrentDir
-.ent	PrintCurrentDir
-PrintCurrentDir:
-addiu $2,$0,SC_PrintCurrentDir
-syscall
-j	$31
-.end PrintCurrentDir
-
-.globl Ls
-.ent	Ls
-Ls:
-addiu $2,$0,SC_Ls
-syscall
-j	$31
-.end Ls
 
 #endif
 

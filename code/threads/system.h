@@ -43,8 +43,6 @@ extern SynchConsole *synchconsole;
 #include "synch.h"
 extern Semaphore *mutexRead;
 extern Semaphore *mutexWrite;
-#include "pageprovider.h"
-extern PageProvider *pageProvider;
 #endif
 #endif
 
