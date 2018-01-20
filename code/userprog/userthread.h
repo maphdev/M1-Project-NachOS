@@ -7,6 +7,7 @@ extern int do_ThreadCreate(int f, int arg, int ret);
 extern void do_ThreadExit();
 
 
+extern int do_ForkExec(char *filename);
 extern int do_SemaphoreCreate(int nbCredit);
 extern void do_SemaphoreDelete(int id);
 extern void do_SemaphoreP(int id);

@@ -51,6 +51,16 @@ SwapHeader (NoffHeader * noffH)
 }
 
 //----------------------------------------------------------------------
+// ReadAtVirtual
+//      Declaration of ReadAtVirtual for compilation
+//----------------------------------------------------------------------
+
+
+#ifdef CHANGED
+static void ReadAtVirtual(OpenFile *executable, int virtualaddr, int numBytes, int position, TranslationEntry *pageTable, unsigned numPages);
+#endif
+
+//----------------------------------------------------------------------
 // AddrSpace::AddrSpace
 //      Create an address space to run a user program.
 //      Load the program from a file "executable", and set everything
@@ -90,13 +100,20 @@ AddrSpace::AddrSpace (OpenFile * executable)
     if (numPages > NumPhysPages)
 	    throw std::bad_alloc();
 
-    DEBUG ('a', "Initializing address space, num pages %d, total size 0x%x\n",
+    DEBUG ('p', "Initializing address space, num pages %d, total size 0x%x\n",
 	   numPages, size);
 // first, set up the translation
     pageTable = new TranslationEntry[numPages];
     for (i = 0; i < numPages; i++)
       {
-	  pageTable[i].physicalPage = i;	// for now, phys page # = virtual page #
+    #ifdef CHANGED
+    DEBUG ('p', "%d\n", i);
+
+    //pageTable[i].virtualPage = i;
+	  //pageTable[i].physicalPage = i+1;	// I.4 : la page virtuelle i est une projection de la page physique i + 1.
+    pageTable[i].physicalPage = pageProvider->GetEmptyPage(); // I.6 : allocation normale des pages
+    //pageTable[i].physicalPage = pageProvider->GetRandomEmptyPage(); // I.6 : allocation aléatoire des pages
+    #endif
 	  pageTable[i].valid = TRUE;
 	  pageTable[i].use = FALSE;
 	  pageTable[i].dirty = FALSE;
@@ -110,17 +127,24 @@ AddrSpace::AddrSpace (OpenFile * executable)
       {
 	  DEBUG ('a', "Initializing code segment, at 0x%x, size 0x%x\n",
 		 noffH.code.virtualAddr, noffH.code.size);
-	  executable->ReadAt (&(machine->mainMemory[noffH.code.virtualAddr]),
-			      noffH.code.size, noffH.code.inFileAddr);
+	  /*executable->ReadAt (&(machine->mainMemory[noffH.code.virtualAddr]),
+			      noffH.code.size, noffH.code.inFileAddr);*/
+            #ifdef CHANGED
+              ReadAtVirtual(executable, noffH.code.virtualAddr, noffH.code.size, noffH.code.inFileAddr, pageTable, numPages);
+            #endif
       }
+
     if (noffH.initData.size > 0)
       {
 	  DEBUG ('a', "Initializing data segment, at 0x%x, size 0x%x\n",
 		 noffH.initData.virtualAddr, noffH.initData.size);
-	  executable->ReadAt (&
+	  /*executable->ReadAt (&
 			      (machine->mainMemory
 			       [noffH.initData.virtualAddr]),
-			      noffH.initData.size, noffH.initData.inFileAddr);
+			      noffH.initData.size, noffH.initData.inFileAddr);*/
+            #ifdef CHANGED
+              ReadAtVirtual(executable, noffH.initData.virtualAddr, noffH.initData.size, noffH.initData.inFileAddr, pageTable, numPages);
+            #endif
       }
 
     DEBUG ('a', "Area for stacks at 0x%x, size 0x%x\n",
@@ -144,6 +168,12 @@ AddrSpace::AddrSpace (OpenFile * executable)
 
 AddrSpace::~AddrSpace ()
 {
+  #ifdef CHANGED
+  for (unsigned int i = 0; i < numPages; i++) {
+    pageProvider->ReleasePage(pageTable[i].physicalPage);
+  }
+  #endif
+
   // LB: Missing [] for delete
   // delete pageTable;
   delete [] pageTable;
@@ -233,6 +263,27 @@ AddrSpace::DeAllocateUserStack (int addrUserStack)
   mutex->P ();
   bitmap->Clear(idRec);
   mutex->V ();
+}
+
+static void ReadAtVirtual(OpenFile *executable, int virtualaddr, int numBytes, int position, TranslationEntry *pageTable, unsigned numPages){
+  // tampon temporaire que nous remplissons avec ReadAt
+  char buffer[numBytes];
+  int size = executable->ReadAt(buffer, numBytes, position);
+
+  // on sauvegarde la page des tables actuelle
+  TranslationEntry *oldPageTable = machine->pageTable;
+  unsigned oldNumPages = machine->pageTableSize;
+  machine->pageTable = pageTable;
+  machine->pageTableSize = numPages;
+
+  // On recopie en mémoire octet par octet avec WriteMem -> Peu efficace mais difficile à optimiser
+  for(int i = 0; i < size; i++) {
+    machine->WriteMem(virtualaddr+i, 1, *(buffer+i));
+  }
+
+  // On restore l'ancienne page des tables, en s'inpirant de space->restoreState
+  machine->pageTable = oldPageTable;
+  machine->pageTableSize = oldNumPages;
 }
 
 #endif
