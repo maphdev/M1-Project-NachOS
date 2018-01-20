@@ -37,6 +37,7 @@ Machine *machine;		// user program memory and registers
 SynchConsole * synchconsole;
 Semaphore *mutexRead;
 Semaphore *mutexWrite;
+PageProvider *pageProvider;
 #endif
 #endif
 
@@ -186,6 +187,7 @@ Initialize (int argc, char **argv)
     #ifdef CHANGED
     mutexRead = new Semaphore("mutexRead", 1);
     mutexWrite = new Semaphore("mutexWrite", 1);
+    pageProvider = new PageProvider();
     #endif
 
 #endif
@@ -231,6 +233,8 @@ Cleanup ()
     delete mutexWrite;
     mutexRead = NULL;
     mutexWrite = NULL;
+    delete pageProvider;
+    pageProvider = NULL;
     #endif
     delete machine;
     machine = NULL;
